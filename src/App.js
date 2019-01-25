@@ -1,25 +1,60 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
 import './App.css';
 
+import AddItem from './AddItem';
+import Items from './Items';
+
+require('./icon/iconfont');
+
 class App extends Component {
+
+  constructor(props) {
+    super(props);
+    this.handleSubmit = this.handleSubmit.bind(this);
+    this.state = {
+      undone: [],
+      done: []
+    }
+  }
+
+  handleSubmit(item) {
+    const undone = this.state.undone.slice();
+    undone.push(item);
+    this.setState({
+      undone
+    });
+  }
+
+  handleAffair(index1, index2) {
+    let undone = this.state.undone.slice();
+    if (index2 === 1) {
+      // delete
+      const doneAdd = undone.splice(index1, 1);
+      let done = this.state.done.slice();
+      done = done.concat(doneAdd);
+      this.setState({
+        undone,
+        done
+      });
+    }
+  }
+
   render() {
     return (
-      <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <p>
-            Edit <code>src/App.js</code> and save to reload.
-          </p>
-          <a
-            className="App-link"
-            href="https://reactjs.org"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Learn React
-          </a>
-        </header>
+      <div className="container">
+        <h1>To-do-list Prework</h1>
+        <AddItem
+          upSubmit={this.handleSubmit}
+        />
+        <Items
+          type="undone"
+          items={this.state.undone}
+          affair={this.handleAffair.bind(this)}
+        />
+        <Items 
+          type="done"
+          items={this.state.done}
+        />
       </div>
     );
   }
