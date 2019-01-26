@@ -25,3 +25,8 @@ svg {
   margin-right: 1em;
   cursor: pointer;
 }
+
+.done {
+  color: red;
+  text-decoration: line-through;
+}

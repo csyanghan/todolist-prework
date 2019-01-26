@@ -23,22 +23,33 @@ class AddItem extends Component {
     this.handlePriorityChange = this.handlePriorityChange.bind(this);
   }
 
+  componentDidMount() {
+    const item = this.props.item;
+    this.setState(item);
+  }
+
+  handleupChange() {
+    if (this.props.alwaysUp) {
+      this.props.alwaysUp(this.state);
+    }
+  }
+
   handleDateChange(date) {
     this.setState({
       date
-    });
+    }, () => {this.handleupChange()});
   }
 
   handleTitleChange(e) {
     this.setState({
       title: e.target.value
-    });
+    }, () => {this.handleupChange()});
   }
 
   handlePriorityChange(e) {
     this.setState({
       priority: e.target.value
-    });
+    }, () => {this.handleupChange()});
   }
 
   handleSubmit() {
@@ -81,9 +92,11 @@ class AddItem extends Component {
                 value={this.state.date}
               />
             </div>
-            <Button variant="primary" onClick={() => this.handleSubmit()}>
-              Submit
-            </Button>
+            { !this.props.item && (
+              <Button variant="primary" onClick={() => this.handleSubmit()}>
+                Submit
+              </Button>
+            )}
           </div>
         </Form>
       </div>
