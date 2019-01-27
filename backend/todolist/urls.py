@@ -3,6 +3,6 @@ from django.conf.urls import url;
 from . import views
 
 urlpatterns = [
-    url('', views.TodoList.as_view()),
-    url('<int:pk>/', views.TodoTitle.as_view()),
+    url('^todolist/$', views.todo_list),
+    url('^todo/(?P<pk>[0-9]+)/$', views.todo_detail)
 ]

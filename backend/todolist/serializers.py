@@ -1,22 +1,9 @@
 # -*- coding:utf-8 -*-
-
-from django.contrib.auth.models import User, Group
 from rest_framework import serializers
 from . import models
 
-
-class UserSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = User
-        fields = ('url', 'username', 'email', 'groups')
-
-
-class GroupSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = Group
-        fields = ('url', 'name')
-
 class TodoSerializer(serializers.ModelSerializer):
+    # ModelSerializer 只是创建序列化器类的快捷方式，默认简单实现的create()和update()方法。
     class Meta:
         model = models.Todo
         fields = ('id', 'title', 'date', 'priority')

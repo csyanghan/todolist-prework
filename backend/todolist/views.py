@@ -1,30 +1,49 @@
 # -*- coding:utf-8 -*-
+from django.http import HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework.renderers import JSONRenderer
+from rest_framework.parsers import JSONParser
 
-from django.contrib.auth.models import User, Group
-from rest_framework import viewsets
 from todolist.serializers import UserSerializer, GroupSerializer, TodoSerializer
-from rest_framework import generics
 from .models import Todo
 
-class UserViewSet(viewsets.ModelViewSet):
-    """
-    允许用户查看或编辑的API路径。
-    """
-    queryset = User.objects.all().order_by('-date_joined')
-    serializer_class = UserSerializer
+class JSONResponse(HttpResponse):
 
+    def __init__(self, data, **kwargs):
+        content = JSONRenderer().render(data)
+        kwargs['content_type'] = 'application/json'
+        super(JSONResponse, self).__init__(content, **kwargs)
+    
+@csrf_exempt
+def todo_list(request):
+    if request.method == 'GET':
+        todos = Todo.objects.all()
+        serializer = TodoSerializer(todos, many=True)
+        return JSONResponse(serializer.data)
+    else:
+        # 405 方法不允许
+        return HttpResponse(status=405)
+    
+@csrf_exempt
+def todo_detail(request, pk):
+    try:
+        todo = Todo.objects.get(pk=pk)
+    except Todo.DoesNotExist:
+        return HttpResponse(status=404)
+    
+    if request.method == 'GET':
+        print "Hello, world"
+        serializer = TodoSerializer(todo)
+        return JSONResponse(serializer.data)
 
-class GroupViewSet(viewsets.ModelViewSet):
-    """
-    允许组查看或编辑的API路径。
-    """
-    queryset = Group.objects.all()
-    serializer_class = GroupSerializer
+    elif request.method == 'PUT':
+        data = JSONParser().parse(request)
+        serializer = TodoSerializer(todo, data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return JSONResponse(serializer.data)
+        return JSONResponse(serializer.errors, status=400)
 
-class TodoList(generics.ListAPIView):
-    queryset = Todo.objects.all()
-    serializer_class = TodoSerializer
-
-class TodoTitle(generics.RetrieveAPIView):
-    queryset = Todo.objects.all()
-    serializer_class = TodoSerializer
+    elif request.method == 'DELETE':
+        todo.delete()
+        return HttpResponse(status=204)
