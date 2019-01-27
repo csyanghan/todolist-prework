@@ -1,49 +1,66 @@
 # -*- coding:utf-8 -*-
-from django.http import HttpResponse
-from django.views.decorators.csrf import csrf_exempt
-from rest_framework.renderers import JSONRenderer
-from rest_framework.parsers import JSONParser
+from rest_framework import status
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 
-from todolist.serializers import UserSerializer, GroupSerializer, TodoSerializer
+from todolist.serializers import TodoSerializer
 from .models import Todo
-
-class JSONResponse(HttpResponse):
-
-    def __init__(self, data, **kwargs):
-        content = JSONRenderer().render(data)
-        kwargs['content_type'] = 'application/json'
-        super(JSONResponse, self).__init__(content, **kwargs)
     
-@csrf_exempt
+@api_view(['GET'])
 def todo_list(request):
+    '''
+    此时request 才是 rest-framework中的request对象
+    没有包装的是django的HttpRequest
+    '''
     if request.method == 'GET':
-        todos = Todo.objects.all()
+        types = request.query_params.get('type', False)
+        if (types =='True' or types=='true'):
+            types = '1'
+        else:
+            types = '0'
+        todos = Todo.objects.filter(done=types)
         serializer = TodoSerializer(todos, many=True)
-        return JSONResponse(serializer.data)
+        return Response(serializer.data)
     else:
         # 405 方法不允许
-        return HttpResponse(status=405)
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
     
-@csrf_exempt
+@api_view(['PUT', 'DELETE'])
 def todo_detail(request, pk):
     try:
         todo = Todo.objects.get(pk=pk)
     except Todo.DoesNotExist:
-        return HttpResponse(status=404)
-    
-    if request.method == 'GET':
-        print "Hello, world"
-        serializer = TodoSerializer(todo)
-        return JSONResponse(serializer.data)
+        return Response(status=404)
 
-    elif request.method == 'PUT':
-        data = JSONParser().parse(request)
+    if request.method == 'PUT':
+        data = request.data
         serializer = TodoSerializer(todo, data=data)
         if serializer.is_valid():
             serializer.save()
-            return JSONResponse(serializer.data)
-        return JSONResponse(serializer.errors, status=400)
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)
 
     elif request.method == 'DELETE':
         todo.delete()
-        return HttpResponse(status=204)
+        return Response(status=204)
+
+@api_view(['PUT'])
+def todo(request):
+    if request.method == 'PUT':
+        id = request.data.get('id')
+        try:
+            todo = Todo.objects.get(pk=id)
+        except Todo.DoesNotExist:
+            return Response(status=404)
+        data = {
+            "done": True
+        }
+        serializer = TodoSerializer(todo, data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=200)
+        return Response(serializer.errors, status=400)
+    
+    else:
+        # 405 方法不允许
+        return Response(status=405)

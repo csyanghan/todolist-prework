@@ -4,6 +4,7 @@ import './App.css';
 import AddItem from './AddItem';
 import Items from './Items';
 import ModifyItem from './ModifyItem';
+import axios from 'axios';
 
 require('./icon/iconfont');
 
@@ -18,6 +19,12 @@ class App extends Component {
       show: false,
       modifyIndex: -1
     }
+  }
+
+  componentDidMount() {
+    axios.get('/todolist?type=false').then((res) => {
+      console.log(res)
+    })
   }
 
   handleSubmit(item) {
