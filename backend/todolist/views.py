@@ -2,6 +2,7 @@
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
 
 from todolist.serializers import TodoSerializer
 from .models import Todo
@@ -19,8 +20,10 @@ def todo_list(request):
         else:
             types = '0'
         todos = Todo.objects.filter(done=types)
-        serializer = TodoSerializer(todos, many=True)
-        return Response(serializer.data)
+        pg = PageNumberPagination()
+        page_todos = pg.paginate_queryset(queryset=todos,request=request)
+        serializer = TodoSerializer(page_todos, many=True)
+        return pg.get_paginated_response(serializer.data)
     else:
         # 405 方法不允许
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
@@ -44,7 +47,7 @@ def todo_detail(request, pk):
         todo.delete()
         return Response(status=204)
 
-@api_view(['PUT'])
+@api_view(['PUT', 'POST'])
 def todo(request):
     if request.method == 'PUT':
         id = request.data.get('id')
@@ -60,7 +63,13 @@ def todo(request):
             serializer.save()
             return Response(serializer.data, status=200)
         return Response(serializer.errors, status=400)
-    
+    elif request.method == 'POST':
+        serializer = TodoSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
     else:
         # 405 方法不允许
         return Response(status=405)
